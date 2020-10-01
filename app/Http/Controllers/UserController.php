@@ -7,6 +7,8 @@ use App\Models\Role;
 use App\Models\Permission;
 use Illuminate\Http\Request;
 
+use App\Traits\ReverseGeoCoding;
+
 class UserController extends Controller
 {
     /**
@@ -73,6 +75,7 @@ class UserController extends Controller
     public function show(User $user)
     {
         $user = User::find($user->id);
+        $user->address = ReverseGeoCoding::getLocation($user->latitude, $longitude);
         return view('users.index', compact('user', 'roles'));
     }
 
