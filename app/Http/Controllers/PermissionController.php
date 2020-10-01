@@ -3,10 +3,17 @@
 namespace App\Http\Controllers;
 
 use App\Models\Permission;
+use App\Models\Role;
 use Illuminate\Http\Request;
 
 class PermissionController extends Controller
 {
+
+    public function __construct()
+    {
+        $this->middleware('auth');
+    }
+
     /**
      * Display a listing of the resource.
      *
@@ -14,7 +21,8 @@ class PermissionController extends Controller
      */
     public function index()
     {
-        //
+        $permissions = Permission::all();
+        return view('permissions.index',compact('permissions'));
     }
 
     /**
@@ -24,7 +32,8 @@ class PermissionController extends Controller
      */
     public function create()
     {
-        //
+        $roles = Role::get(); //Get all roles
+        return view('permissions.create',compact('roles'));
     }
 
     /**
@@ -35,7 +44,19 @@ class PermissionController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $this->validate($request, [
+            'name'=>'required|max:40',
+        ]);
+        $permission = new Permission();
+        $permission->name = $request->name;
+        $permission->save();
+        if ($request->roles <> '') {
+            foreach ($request->roles as $key=>$value) {
+                $role = Role::find($value);
+                $role->permissions()->attach($permission);
+            }
+        }
+        return redirect()->route('permissions.index')->with('success','Permission added successfully');
     }
 
     /**
@@ -57,7 +78,7 @@ class PermissionController extends Controller
      */
     public function edit(Permission $permission)
     {
-        //
+        return view('permissions.edit', compact('permission'));
     }
 
     /**
@@ -69,7 +90,14 @@ class PermissionController extends Controller
      */
     public function update(Request $request, Permission $permission)
     {
-        //
+        $this->validate($request, [
+            'name'=>'required',
+        ]);
+        $permission->name=$request->name;
+        $permission->save();
+        return redirect()->route('permissions.index')
+            ->with('success',
+             'Permission'. $permission->name.' updated!');
     }
 
     /**
@@ -80,6 +108,9 @@ class PermissionController extends Controller
      */
     public function destroy(Permission $permission)
     {
-        //
+        $permission->delete();
+        return redirect()->route('permissions.index')
+            ->with('success',
+             'Permission deleted successfully!');
     }
 }
